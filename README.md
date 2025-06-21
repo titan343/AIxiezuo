@@ -10,6 +10,9 @@
 - 🌐 Web界面，便于交互式创作
 - 📝 多小说项目隔离管理
 - 🔄 多版本生成和比较
+![微信截图_20250621235112](https://github.com/user-attachments/assets/0754700c-2937-4f60-9937-6910032001d2)
+![微信截图_20250621235138](https://github.com/user-attachments/assets/583094fd-4b8e-4eb8-8b56-fed366f6d849)
+![微信截图_20250621235322](https://github.com/user-attachments/assets/db920f8a-6e4c-4de7-b3b6-091e3fabc85f)
 
 ## 安装使用
 
