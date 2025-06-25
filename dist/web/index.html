@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说生成系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 小说生成系统</h1>
+            <nav class="tabs">
+                <button class="tab-btn active" data-tab="template">📝 模版管理</button>
+                <button class="tab-btn" data-tab="generate">✨ 小说生成</button>
+                <button class="tab-btn" data-tab="chat">💬 助手对话</button>
+            </nav>
+        </header>
+
+        <!-- 模版管理 -->
+        <div id="template" class="tab-content active">
+            <div class="template-section">
+                <div class="template-list">
+                    <h3>📋 模版列表</h3>
+                    <div class="template-selector">
+                        <select id="templateSelect">
+                            <option value="">选择模版...</option>
+                        </select>
+                        <button id="newTemplateBtn">➕ 新建模版</button>
+                    </div>
+                    <div id="templateInfo" class="template-info"></div>
+                </div>
+
+                <div class="template-editor">
+                    <h3>✏️ 模版编辑</h3>
+                    <div class="template-meta">
+                        <input type="text" id="templateId" placeholder="模版ID (如: 001)" maxlength="3">
+                        <input type="text" id="templateName" placeholder="模版名称">
+                        <input type="text" id="templateCategory" placeholder="分类">
+                        <div class="word-count">
+                            <input type="number" id="minWords" placeholder="最小字数" min="1000">
+                            <span>-</span>
+                            <input type="number" id="maxWords" placeholder="最大字数" min="1000">
+                        </div>
+                    </div>
+
+                    <div class="prompt-editors">
+                        <div class="prompt-editor">
+                            <label>👤 角色定义 (writer_role.txt)</label>
+                            <textarea id="writerRole" placeholder="定义AI的身份、专业能力、写作风格..."></textarea>
+                        </div>
+
+                        <div class="prompt-editor">
+                            <label>📜 写作规则 (writing_rules.txt)</label>
+                            <textarea id="writingRules" placeholder="定义执行规则、约束条件、输出格式..."></textarea>
+                        </div>
+
+                        <div class="prompt-editor">
+                            <label>🔄 状态更新规则 (update_state_rules.txt)</label>
+                            <textarea id="updateStateRules" placeholder="指导AI如何更新角色状态JSON..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="template-actions">
+                        <button id="saveTemplateBtn" class="btn-primary">💾 保存模版</button>
+                        <button id="previewTemplateBtn" class="btn-secondary">👁️ 预览</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设定管理区 -->
+            <div class="settings-section">
+                <h2>⚙️ 设定管理</h2>
+
+                <div class="settings-config">
+                    <div class="config-group">
+                        <label>📖 小说ID:</label>
+                        <div class="novel-id-group">
+                            <input type="text" id="settingsNovelId" placeholder="输入小说ID (如: 003)" maxlength="20">
+                            <button id="loadSettingsBtn" class="btn-small">📂 加载设定</button>
+                        </div>
+                        <div id="settingsInfo" class="novel-info"></div>
+                    </div>
+
+                    <div class="settings-versions">
+                        <div class="version-group">
+                            <label>👤 人物设定版本:</label>
+                            <select id="characterVersionSelect">
+                                <option value="">选择版本...</option>
+                            </select>
+                            <button id="newCharacterBtn" class="btn-small">➕ 新建</button>
+                        </div>
+
+                        <div class="version-group">
+                            <label>🌍 世界设定版本:</label>
+                            <select id="worldVersionSelect">
+                                <option value="">选择版本...</option>
+                            </select>
+                            <button id="newWorldBtn" class="btn-small">➕ 新建</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-editors">
+                    <div class="settings-editor">
+                        <label>👤 人物设定 (Character State)</label>
+                        <textarea id="characterSettings" placeholder="人物设定JSON将显示在这里..."></textarea>
+                        <button id="saveCharacterBtn" class="btn-primary">💾 保存人物设定</button>
+                    </div>
+
+                    <div class="settings-editor">
+                        <label>🌍 世界设定 (World Bible)</label>
+                        <textarea id="worldSettings" placeholder="世界设定JSON将显示在这里..."></textarea>
+                        <button id="saveWorldBtn" class="btn-primary">💾 保存世界设定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 小说生成 -->
+    <div id="generate" class="tab-content">
+        <div class="generate-section">
+            <!-- 单章生成区域 -->
+            <div class="single-generate">
+                <h2>📝 单章生成</h2>
+                <div class="generate-config">
+                    <h3>⚙️ 生成配置</h3>
+
+                    <div class="config-group">
+                        <label>📖 小说ID:</label>
+                        <div class="novel-id-group">
+                            <input type="text" id="novelId" placeholder="输入小说ID (如: novel001)" maxlength="20">
+                            <button id="loadNovelBtn" class="btn-small">📂 加载</button>
+                            <button id="listNovelsBtn" class="btn-small">📋 列表</button>
+                        </div>
+                        <div id="novelInfo" class="novel-info"></div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>🎭 选择模版:</label>
+                        <select id="genTemplateSelect">
+                            <option value="">选择模版...</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
+                        <label>🤖 选择模型:</label>
+                        <select id="modelSelect">
+                            <option value="deepseek_chat">DeepSeek Chat (默认)</option>
+                            <option value="deepseek_reasoner">DeepSeek Reasoner</option>
+                            <option value="dsf5">DSF5 (Gemini)</option>
+                            <option value="openai_gpt4">OpenAI GPT-4</option>
+                            <option value="openai_gpt35">OpenAI GPT-3.5</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
+                        <label>📚 记忆设置:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="useMemory"> 启用历史记录</label>
+                            <label><input type="checkbox" id="readCompressed"> 读取压缩记忆</label>
+                            <label><input type="checkbox" id="useCompression"> 生成后压缩</label>
+                            <label><input type="checkbox" id="useState" checked> 使用角色状态</label>
+                            <label><input type="checkbox" id="useWorldBible" checked> 使用世界设定</label>
+                            <label><input type="checkbox" id="updateState"> 更新角色状态</label>
+                        </div>
+                        <div class="memory-help">
+                            <small>
+                                💡 <strong>启用历史记录</strong>：生成前读取对话记忆到提示词<br>
+                                💡 <strong>读取压缩记忆</strong>：读取已压缩的记忆摘要(summaries)，否则读取原始记忆(chunks)<br>
+                                💡 <strong>生成后压缩</strong>：生成完成后自动压缩本次对话记录<br>
+                                💡 <strong>更新角色状态</strong>：生成后根据章节内容自动更新角色状态文件（需要设置小说ID）
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>🔢 记忆数量:</label>
+                        <input type="number" id="recentCount" value="20" min="1" max="100">
+                    </div>
+                </div>
+
+                <div class="generate-content">
+                    <div class="content-section">
+                        <h3>📖 章节细纲</h3>
+                        <textarea id="chapterOutline" placeholder='【第一章：初入宗门】
+
+开场：
+- 古龙刚刚突破筑基一层，但因为资质平平被分配到外门
+- 在炼丹房做道童，日子过得很苦
+- 妹妹古薰儿病情加重，急需珍贵药材
+
+发展：
+- 柳彪故意刁难，让古龙去危险的地方采药
+- 古龙在后山遇到了一只受伤的灵兽
+- 意外发现了一个隐秘的洞府
+
+高潮：
+- 洞府中有前辈留下的传承
+- 古龙获得了《九天玄剑真诀》的真正修炼方法
+- 实力暗中提升，但表面仍装作普通弟子
+
+结尾钩子：
+- 柳彪发现古龙最近有些不对劲
+- 暗中派人监视古龙
+- 一场更大的阴谋正在酝酿...
+
+目标字数：2800字
+情绪基调：憋屈中带着希望，暗流涌动'></textarea>
+                    </div>
+
+                    <div class="generate-actions">
+                        <button id="generateBtn" class="btn-primary">🚀 开始生成</button>
+                        <div id="generateStatus" class="status"></div>
+                    </div>
+
+                    <div class="generate-result">
+                        <h3>📚 生成结果</h3>
+                        <textarea id="novelResult" placeholder="生成的小说内容将显示在这里..." readonly></textarea>
+                        <div class="result-actions">
+                            <button id="copyResultBtn" class="btn-secondary">📋 复制</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 连续生成区域 -->
+            <div class="batch-generate">
+                <h2>🔄 连续生成</h2>
+                <div class="batch-config">
+                    <h3>⚙️ 批量配置</h3>
+
+                    <div class="config-group">
+                        <label>📖 小说ID:</label>
+                        <div class="novel-id-group">
+                            <input type="text" id="batchNovelId" placeholder="输入小说ID (如: 003)" maxlength="20">
+                            <button id="loadBatchNovelBtn" class="btn-small">📂 检测进度</button>
+                        </div>
+                        <div id="batchNovelInfo" class="novel-info"></div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>🎭 选择模版:</label>
+                        <select id="batchTemplateSelect">
+                            <option value="">选择模版...</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
+                        <label>🤖 选择模型:</label>
+                        <select id="batchModelSelect">
+                            <option value="deepseek_chat">DeepSeek Chat (默认)</option>
+                            <option value="deepseek_reasoner">DeepSeek Reasoner</option>
+                            <option value="dsf5">DSF5 (Gemini)</option>
+                            <option value="openai_gpt4">OpenAI GPT-4</option>
+                            <option value="openai_gpt35">OpenAI GPT-3.5</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
+                        <label>📚 记忆设置:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="batchUseMemory" checked> 启用历史记录</label>
+                            <label><input type="checkbox" id="batchReadCompressed"> 读取压缩记忆</label>
+                            <label><input type="checkbox" id="batchUseCompression" checked> 生成后压缩</label>
+                            <label><input type="checkbox" id="batchUseState" checked> 使用角色状态</label>
+                            <label><input type="checkbox" id="batchUseWorldBible" checked> 使用世界设定</label>
+                            <label><input type="checkbox" id="batchUpdateState"> 更新角色状态</label>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>🔢 记忆数量:</label>
+                        <input type="number" id="batchRecentCount" value="20" min="1" max="100">
+                    </div>
+
+                    <div class="config-group">
+                        <label>📊 执行章节数:</label>
+                        <input type="number" id="batchChapterCount" value="5" min="1" max="50" placeholder="要生成的章节数量">
+                        <small>系统将从当前进度开始，连续生成指定数量的章节</small>
+                    </div>
+                </div>
+
+                <div class="batch-actions">
+                    <button id="startBatchBtn" class="btn-primary">🚀 开始连续生成</button>
+                    <button id="stopBatchBtn" class="btn-danger" disabled>⏹️ 停止生成</button>
+                    <div id="batchStatus" class="status"></div>
+                </div>
+
+                <div class="batch-progress">
+                    <h3>📈 生成进度</h3>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div id="progressText" class="progress-text">等待开始...</div>
+                    <div id="batchLog" class="batch-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 助手对话 -->
+    <div id="chat" class="tab-content">
+        <div class="chat-section">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    <div class="message-content">
+                        💡 欢迎使用AI助手！你可以询问关于小说创作的任何问题。
+                        <br>💾 提示：如果在"小说生成"页面设置了小说ID，对话记忆将与该小说关联。
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <div class="chat-config">
+                    <select id="chatModel">
+                        <option value="deepseek_chat">DeepSeek Chat</option>
+                        <option value="openai_gpt35">OpenAI GPT-3.5</option>
+                    </select>
+                    <label><input type="checkbox" id="chatMemory" checked> 记住对话</label>
+                </div>
+                <div class="input-group">
+                    <textarea id="chatInput" placeholder="输入你的问题..." rows="3"></textarea>
+                    <button id="sendChatBtn" class="btn-primary">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

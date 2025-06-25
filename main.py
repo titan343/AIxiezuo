@@ -55,11 +55,11 @@ class LLMConfigManager:
                 "base_url": "https://api.deepseek.com/v1",
                 "temperature": 0.7
             },
-            "dsf5": {
+            "dsf": {
                 "provider": "openai",
-                "model": "[稳定]gemini-2.5-pro-preview-06-05-c",
-                "api_key": os.getenv("DSF5_API_KEY"),
-                "base_url": "https://api.sikong.shop/v1",
+                "model": os.getenv("DSF_API_MODEL"),
+                "api_key": os.getenv("DSF_API_KEY"),
+                "base_url": os.getenv("DSF_API_URL"),
                 "temperature": 0.7
             },
             "openai_gpt4": {
@@ -85,7 +85,7 @@ class LLMConfigManager:
             },
             "google_gemini": {
                 "provider": "google",
-                "model": "gemini-pro",
+                "model": "gemini-2.5-pro",
                 "api_key": os.getenv("GOOGLE_API_KEY"),
                 "base_url": None,
                 "temperature": 0.7

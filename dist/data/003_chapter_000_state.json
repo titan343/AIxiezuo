@@ -1,0 +1,42 @@
+{
+  "chapter_index": 0,
+  "protagonist": {
+    "name": "古龙",
+    "age": 28,
+    "level": "筑基一层",
+    "status": "云渺宗外门弟子，勉强算是炼丹道童，资质平平。",
+    "personality": "坚毅、隐忍、有仇必报、略微财迷、有一点好色但为人正直",
+    "abilities": [
+      "九天玄剑真诀"
+    ],
+    "goal": "洗刷冤屈，成为强者，获取内门修炼资格"
+  },
+  "inventory": [
+    {
+      "item_name": "生锈的铁剑",
+      "description": "一把普通的铁剑，毫不起眼。"
+    },
+    {
+      "item_name": "一本穿越时自动出现在记忆里的剑诀，九天玄剑真诀",
+      "description": "看似普通，实则另有玄机（重要伏笔）。"
+    }
+  ],
+  "relationships": [
+    {
+      "name": "古薰儿",
+      "relation": "妹妹",
+      "status": "体弱多病，需要珍贵药材续命。"
+    },
+    {
+      "name": "柳彪",
+      "relation": "外门管事",
+      "status": "敌人，诬陷主角的罪魁祸首，筑基五层后期。"
+    },
+    {
+      "name": "柳嫣然",
+      "relation": "宗门天才少女",
+      "status": "曾经的青梅竹马，现为内门弟子，关系疏远。"
+    }
+  ],
+  "current_plot_summary": "故事开始于云渺宗外门，主角被诬陷，面临被废修为的危机。"
+}
