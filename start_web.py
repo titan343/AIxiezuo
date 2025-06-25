@@ -134,7 +134,7 @@ def check_environment():
         print("⚠️  .env文件不存在，请确保已配置API密钥")
         print("   需要配置的环境变量:")
         print("   - DEEPSEEK_API_KEY")
-        print("   - DSF_API_KEY (可选)")
+        print("   - DSF5_API_KEY (可选)")
         print("   - OPENAI_API_KEY (可选)")
         return False
     
