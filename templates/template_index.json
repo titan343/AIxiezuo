@@ -17,7 +17,24 @@
       },
       "word_count_range": {
         "min": 2200,
-        "max": 3000
+        "max": 3500
+      }
+    },
+    "002": {
+      "id": "002",
+      "name": "情绪内核小说模板",
+      "category": "爽文",
+      "description": "",
+      "author": "用户创建",
+      "created_date": "2025-07-04",
+      "files": {
+        "writer_role": "002_writer_role.txt",
+        "writing_rules": "002_writing_rules.txt",
+        "update_state_rules": "002_update_state_rules.txt"
+      },
+      "word_count_range": {
+        "min": 2200,
+        "max": 3500
       }
     }
   },
