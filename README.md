@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ### 2. 配置API密钥
 
-创建 `.env` 文件：
+编辑 `.env` 文件：
 
 ```env
 # 至少配置一个模型的API密钥
@@ -32,18 +32,20 @@ DEEPSEEK_API_KEY=your_deepseek_api_key
 OPENAI_API_KEY=your_openai_api_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 GOOGLE_API_KEY=your_google_api_key
-DSF5_API_KEY=your_dsf5_api_key
+DSF_API_MODEL="第三方api模型"
+DSF_API_KEY="第三方api秘钥"
+DSF_API_URL="第三方api链接"
 ```
 
 ### 3. 启动方式
 
 **Web界面（推荐）：**
 ```bash
-python web_server.py
+python start_web.py
 ```
 访问 http://127.0.0.1:5001  推荐
 
-**命令行使用：**  不推荐
+**命令行使用：** 使用麻烦，不推荐
 ```python
 from main import NovelGenerator
 
@@ -193,7 +195,7 @@ new_state = generator.update_state(
 - **OpenAI**: openai_gpt4, openai_gpt35
 - **Anthropic**: anthropic_claude
 - **Google**: google_gemini
-- **其他**: dsf5 (第三方接口)
+- **其他**: dsf (第三方接口)
 
 ## 许可证
 
