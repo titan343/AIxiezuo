@@ -153,6 +153,8 @@ def generate_novel():
         recent_count = data.get("recent_count", 20)
         session_id = data.get("session_id", "default")
         novel_id = data.get("novel_id")
+        use_previous_chapters = data.get("use_previous_chapters", False)
+        previous_chapters_count = data.get("previous_chapters_count", 1)
         
         if not template_id:
             return jsonify({"error": "缺少模版ID"}), 400
@@ -198,7 +200,9 @@ def generate_novel():
             recent_count=recent_count,
             use_compression=use_compression,
             read_compressed=read_compressed,
-            novel_id=novel_id
+            novel_id=novel_id,
+            use_previous_chapters=use_previous_chapters,
+            previous_chapters_count=previous_chapters_count
         )
         
         return jsonify({

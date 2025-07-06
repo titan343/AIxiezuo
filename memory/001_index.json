@@ -1,0 +1,15 @@
+{
+  "session_id": "001",
+  "total_messages": 6,
+  "chunks": {
+    "1": {
+      "start": 1,
+      "end": 6,
+      "count": 6,
+      "updated_at": 1751792690.6093352
+    }
+  },
+  "summaries": {},
+  "created_at": 1751637557.7664905,
+  "last_updated": 1751792690.6093352
+}

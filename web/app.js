@@ -134,18 +134,20 @@ class TemplateManager {
 
     updateTemplateSelect() {
         const select = document.getElementById('templateSelect');
-        const genSelect = document.getElementById('genTemplateSelect');
+        
+        // 检查元素是否存在
+        if (!select) {
+            console.error('templateSelect元素不存在');
+            return;
+        }
 
         // 清空选项
         select.innerHTML = '<option value="">选择模版...</option>';
-        genSelect.innerHTML = '<option value="">选择模版...</option>';
 
         // 添加模版选项
         Object.values(AppState.templates).forEach(template => {
             const option = new Option(`${template.name} (${template.id})`, template.id);
-            const genOption = new Option(`${template.name} (${template.id})`, template.id);
             select.appendChild(option);
-            genSelect.appendChild(genOption.cloneNode(true));
         });
     }
 
@@ -200,6 +202,11 @@ class TemplateManager {
 
     showTemplateInfo(template) {
         const infoDiv = document.getElementById('templateInfo');
+        if (!infoDiv) {
+            console.error('templateInfo元素不存在');
+            return;
+        }
+        
         infoDiv.innerHTML = `
             <h4>${template.name}</h4>
             <p><strong>ID:</strong> ${template.id}</p>
@@ -226,7 +233,10 @@ class TemplateManager {
         document.getElementById('writerRole').value = '';
         document.getElementById('writingRules').value = '';
         document.getElementById('updateStateRules').value = '';
-        document.getElementById('templateInfo').innerHTML = '';
+        const templateInfo = document.getElementById('templateInfo');
+        if (templateInfo) {
+            templateInfo.innerHTML = '';
+        }
         AppState.currentTemplate = null;
     }
 
@@ -314,318 +324,7 @@ ${templateData.contents.update_state_rules}
     }
 }
 
-// 小说生成器
-class NovelGenerator {
-    constructor() {
-        this.initEvents();
-        this.loadTemplatesForGeneration();
-    }
 
-    initEvents() {
-        // 生成按钮
-        document.getElementById('generateBtn').addEventListener('click', () => {
-            this.generateNovel();
-        });
-
-        // 复制结果
-        document.getElementById('copyResultBtn').addEventListener('click', () => {
-            Utils.copyToClipboard(document.getElementById('novelResult').value);
-        });
-
-
-
-        // 小说ID管理
-        document.getElementById('loadNovelBtn').addEventListener('click', () => {
-            this.loadNovelInfo();
-        });
-
-        document.getElementById('listNovelsBtn').addEventListener('click', () => {
-            this.showNovelsList();
-        });
-
-        // 小说ID输入框回车事件
-        document.getElementById('novelId').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                this.loadNovelInfo();
-            }
-        });
-    }
-
-    async loadNovelInfo() {
-        const novelId = document.getElementById('novelId').value.trim();
-        const novelInfo = document.getElementById('novelInfo');
-
-        if (!novelId) {
-            this.showNovelInfo('请输入小说ID', 'warning');
-            return;
-        }
-
-        try {
-            // 使用新的完整信息API
-            const response = await fetch(`${API_BASE}/novels/${novelId}/info`);
-            if (!response.ok) throw new Error('加载失败');
-
-            const result = await response.json();
-
-            if (result.state.found || result.chapters.total_chapters > 0) {
-                // 构建详细信息
-                const stateChapter = result.state.latest_chapter;
-                const fileChapter = result.chapters.latest_chapter_file;
-                const syncStatus = result.summary.sync_status;
-
-                let info = `✅ 找到小说: ${novelId}\n`;
-
-                // 章节信息
-                if (result.chapters.total_chapters > 0) {
-                    info += `📚 章节文件: ${result.chapters.total_chapters}章 (最新: 第${fileChapter}章)\n`;
-                } else {
-                    info += `📚 章节文件: 无\n`;
-                }
-
-                // 状态信息
-                if (result.state.found) {
-                    info += `📖 状态记录: 第${stateChapter}章\n`;
-                    info += `👤 主角: ${result.state.protagonist} (${result.state.level})\n`;
-                } else {
-                    info += `📖 状态记录: 无\n`;
-                }
-
-                // 同步状态
-                if (result.chapters.total_chapters > 0 && result.state.found) {
-                    const syncIcon = syncStatus === '同步' ? '🟢' : '🟡';
-                    info += `${syncIcon} 同步状态: ${syncStatus}\n`;
-                }
-
-                // 记忆信息
-                if (result.memory.total_messages > 0) {
-                    info += `💬 对话记忆: ${result.memory.total_messages}条消息\n`;
-                }
-
-                // 世界设定
-                if (result.world.has_world_bible) {
-                    info += `🌍 世界设定: 已配置\n`;
-                }
-
-                // 版本信息
-                if (result.versions.has_versions) {
-                    info += `📝 多版本: ${result.versions.version_chapters}章有版本`;
-                }
-
-                // 剧情摘要
-                if (result.state.plot_summary) {
-                    const summary = result.state.plot_summary.substring(0, 50);
-                    info += `\n📝 剧情: ${summary}...`;
-                }
-
-                this.showNovelInfo(info.trim(), 'success');
-            } else {
-                this.showNovelInfo(`⚠️ 小说 ${novelId} 不存在，将创建新小说`, 'warning');
-            }
-
-        } catch (error) {
-            this.showNovelInfo(`❌ 加载失败: ${error.message}`, 'error');
-        }
-    }
-
-    async showNovelsList() {
-        try {
-            const response = await fetch(`${API_BASE}/novels`);
-            if (!response.ok) throw new Error('获取小说列表失败');
-
-            const result = await response.json();
-            const novels = result.novels;
-
-            if (novels.length === 0) {
-                this.showNovelInfo('📭 暂无小说记录', 'warning');
-                return;
-            }
-
-            const novelsList = novels.map(id => `📖 ${id}`).join('\n');
-            this.showNovelInfo(`📚 现有小说:\n${novelsList}`, 'success');
-
-        } catch (error) {
-            this.showNovelInfo(`❌ 获取列表失败: ${error.message}`, 'error');
-        }
-    }
-
-    showNovelInfo(message, type = 'info') {
-        const novelInfo = document.getElementById('novelInfo');
-        novelInfo.textContent = message;
-        novelInfo.className = `novel-info show ${type}`;
-
-        // 3秒后隐藏（除非是成功状态）
-        if (type !== 'success') {
-            setTimeout(() => {
-                novelInfo.classList.remove('show');
-            }, 3000);
-        }
-    }
-
-    loadTemplatesForGeneration() {
-        this.loadTemplatesFromAPI();
-    }
-
-    async loadTemplatesFromAPI() {
-        try {
-            const response = await fetch(`${API_BASE}/templates`);
-            if (!response.ok) throw new Error('加载模版失败');
-
-            const data = await response.json();
-            AppState.templates = data.templates || {};
-
-            // 更新生成页面的模版选择
-            const genSelect = document.getElementById('genTemplateSelect');
-            genSelect.innerHTML = '<option value="">选择模版...</option>';
-
-            Object.values(AppState.templates).forEach(template => {
-                const option = new Option(`${template.name} (${template.id})`, template.id);
-                genSelect.appendChild(option);
-            });
-        } catch (error) {
-            Utils.showError(`加载模版失败: ${error.message}`);
-        }
-    }
-
-    async generateNovel() {
-        if (AppState.isGenerating) return;
-
-        try {
-            const generateData = this.collectGenerateData();
-
-            AppState.isGenerating = true;
-            document.getElementById('generateBtn').disabled = true;
-            Utils.showStatus('generateStatus', '正在生成小说...', 'loading');
-
-            const response = await fetch(`${API_BASE}/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(generateData)
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || '生成失败');
-            }
-
-            const result = await response.json();
-            document.getElementById('novelResult').value = result.content;
-
-            // 自动保存章节
-            const novelId = document.getElementById('novelId').value.trim();
-            if (novelId) {
-                await this.autoSaveChapter(result.content, novelId);
-                Utils.showStatus('generateStatus', '生成完成，已自动保存！', 'success');
-            } else {
-                Utils.showStatus('generateStatus', '生成完成！', 'success');
-            }
-
-        } catch (error) {
-            Utils.showError(`生成失败: ${error.message}`);
-            Utils.showStatus('generateStatus', '生成失败', 'error');
-        } finally {
-            AppState.isGenerating = false;
-            document.getElementById('generateBtn').disabled = false;
-        }
-    }
-
-    collectGenerateData() {
-        const templateId = document.getElementById('genTemplateSelect').value;
-        const chapterOutlineText = document.getElementById('chapterOutline').value.trim();
-        const novelId = document.getElementById('novelId').value.trim();
-
-        if (!templateId) {
-            throw new Error('请选择模版');
-        }
-
-        if (!chapterOutlineText) {
-            throw new Error('请输入章节细纲');
-        }
-
-        const generateData = {
-            template_id: templateId,
-            chapter_outline: chapterOutlineText,
-            model_name: document.getElementById('modelSelect').value,
-            use_memory: document.getElementById('useMemory').checked,
-            read_compressed: document.getElementById('readCompressed').checked,
-            use_compression: document.getElementById('useCompression').checked,
-            use_state: document.getElementById('useState').checked,
-            use_world_bible: document.getElementById('useWorldBible').checked,
-            update_state: document.getElementById('updateState').checked,
-            recent_count: parseInt(document.getElementById('recentCount').value) || 20,
-            session_id: novelId || 'default'
-        };
-
-        // 添加小说ID（如果有）
-        if (novelId) {
-            generateData.novel_id = novelId;
-        }
-
-        return generateData;
-    }
-
-    async autoSaveChapter(content, novelId, chapterIndex = null) {
-        try {
-            // 如果没有提供章节编号，尝试从细纲中提取
-            if (!chapterIndex) {
-                const chapterOutline = document.getElementById('chapterOutline').value;
-                chapterIndex = this.extractChapterIndex(chapterOutline);
-            }
-
-            // 如果仍然没有章节编号，使用默认值1
-            if (!chapterIndex) {
-                chapterIndex = 1;
-            }
-
-            // 调用后端保存API
-            const saveData = {
-                content: content,
-                novel_id: novelId,
-                chapter_index: chapterIndex,
-                auto_save: true
-            };
-
-            const response = await fetch(`${API_BASE}/save-chapter`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(saveData)
-            });
-
-            if (!response.ok) {
-                throw new Error('自动保存失败');
-            }
-
-            const result = await response.json();
-            console.log(`章节已保存为: ${result.filename}`);
-
-        } catch (error) {
-            console.warn(`自动保存失败: ${error.message}`);
-        }
-    }
-
-    extractChapterIndex(chapterOutline) {
-        // 尝试匹配各种章节索引格式
-        const patterns = [
-            /第(\d+)章/,  // 第1章、第10章
-            /chapter[_\s]*(\d+)/i,  // chapter_1, chapter 1
-            /章节[_\s]*(\d+)/,  // 章节_1, 章节 1
-            /【第(\d+)章/,  // 【第1章
-        ];
-
-        for (const pattern of patterns) {
-            const match = chapterOutline.match(pattern);
-            if (match) {
-                try {
-                    return parseInt(match[1]);
-                } catch (e) {
-                    continue;
-                }
-            }
-        }
-
-        return null;
-    }
-
-}
 
 // 对话管理器
 class ChatManager {
@@ -736,6 +435,11 @@ class BatchGenerator {
 
             const data = await response.json();
             const select = document.getElementById('batchTemplateSelect');
+            
+            // 检查元素是否存在
+            if (!select) {
+                throw new Error('batchTemplateSelect元素不存在');
+            }
 
             // 清空现有选项
             select.innerHTML = '<option value="">选择模版...</option>';
@@ -888,7 +592,9 @@ class BatchGenerator {
                 update_state: document.getElementById('batchUpdateState').checked,
                 recent_count: parseInt(document.getElementById('batchRecentCount').value) || 20,
                 session_id: novelId,
-                novel_id: novelId
+                novel_id: novelId,
+                use_previous_chapters: document.getElementById('batchUsePreviousChapters').checked,
+                previous_chapters_count: parseInt(document.getElementById('batchPreviousChaptersCount').value) || 1
             };
 
             // 3. 调用生成API
@@ -1024,7 +730,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化各个管理器
     new TabManager();
     new TemplateManager();
-    new NovelGenerator();
     new ChatManager();
     new BatchGenerator();
     new SettingsManager();
@@ -1126,6 +831,10 @@ class SettingsManager {
     updateVersionSelects() {
         // 更新人物设定版本选择框
         const characterSelect = document.getElementById('characterVersionSelect');
+        if (!characterSelect) {
+            console.error('characterVersionSelect元素不存在');
+            return;
+        }
         characterSelect.innerHTML = '<option value="">选择版本...</option>';
 
         this.characterVersions.forEach(version => {
@@ -1138,6 +847,10 @@ class SettingsManager {
 
         // 更新世界设定版本选择框
         const worldSelect = document.getElementById('worldVersionSelect');
+        if (!worldSelect) {
+            console.error('worldVersionSelect元素不存在');
+            return;
+        }
         worldSelect.innerHTML = '<option value="">选择版本...</option>';
 
         this.worldVersions.forEach(version => {

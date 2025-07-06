@@ -123,113 +123,9 @@
     <!-- 小说生成 -->
     <div id="generate" class="tab-content">
         <div class="generate-section">
-            <!-- 单章生成区域 -->
-            <div class="single-generate">
-                <h2>📝 单章生成</h2>
-                <div class="generate-config">
-                    <h3>⚙️ 生成配置</h3>
-
-                    <div class="config-group">
-                        <label>📖 小说ID:</label>
-                        <div class="novel-id-group">
-                            <input type="text" id="novelId" placeholder="输入小说ID (如: novel001)" maxlength="20">
-                            <button id="loadNovelBtn" class="btn-small">📂 加载</button>
-                            <button id="listNovelsBtn" class="btn-small">📋 列表</button>
-                        </div>
-                        <div id="novelInfo" class="novel-info"></div>
-                    </div>
-
-                    <div class="config-group">
-                        <label>🎭 选择模版:</label>
-                        <select id="genTemplateSelect">
-                            <option value="">选择模版...</option>
-                        </select>
-                    </div>
-
-                    <div class="config-group">
-                        <label>🤖 选择模型:</label>
-                        <select id="modelSelect">
-                            <option value="deepseek_chat">DeepSeek Chat (默认)</option>
-                            <option value="deepseek_reasoner">DeepSeek Reasoner</option>
-                            <option value="dsf5">DSF5 (Gemini)</option>
-                            <option value="openai_gpt4">OpenAI GPT-4</option>
-                            <option value="openai_gpt35">OpenAI GPT-3.5</option>
-                        </select>
-                    </div>
-
-                    <div class="config-group">
-                        <label>📚 记忆设置:</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" id="useMemory"> 启用历史记录</label>
-                            <label><input type="checkbox" id="readCompressed"> 读取压缩记忆</label>
-                            <label><input type="checkbox" id="useCompression"> 生成后压缩</label>
-                            <label><input type="checkbox" id="useState" checked> 使用角色状态</label>
-                            <label><input type="checkbox" id="useWorldBible" checked> 使用世界设定</label>
-                            <label><input type="checkbox" id="updateState"> 更新角色状态</label>
-                        </div>
-                        <div class="memory-help">
-                            <small>
-                                💡 <strong>启用历史记录</strong>：生成前读取对话记忆到提示词<br>
-                                💡 <strong>读取压缩记忆</strong>：读取已压缩的记忆摘要(summaries)，否则读取原始记忆(chunks)<br>
-                                💡 <strong>生成后压缩</strong>：生成完成后自动压缩本次对话记录<br>
-                                💡 <strong>更新角色状态</strong>：生成后根据章节内容自动更新角色状态文件（需要设置小说ID）
-                            </small>
-                        </div>
-                    </div>
-
-                    <div class="config-group">
-                        <label>🔢 记忆数量:</label>
-                        <input type="number" id="recentCount" value="20" min="1" max="100">
-                    </div>
-                </div>
-
-                <div class="generate-content">
-                    <div class="content-section">
-                        <h3>📖 章节细纲</h3>
-                        <textarea id="chapterOutline" placeholder='【第一章：初入宗门】
-
-开场：
-- 古龙刚刚突破筑基一层，但因为资质平平被分配到外门
-- 在炼丹房做道童，日子过得很苦
-- 妹妹古薰儿病情加重，急需珍贵药材
-
-发展：
-- 柳彪故意刁难，让古龙去危险的地方采药
-- 古龙在后山遇到了一只受伤的灵兽
-- 意外发现了一个隐秘的洞府
-
-高潮：
-- 洞府中有前辈留下的传承
-- 古龙获得了《九天玄剑真诀》的真正修炼方法
-- 实力暗中提升，但表面仍装作普通弟子
-
-结尾钩子：
-- 柳彪发现古龙最近有些不对劲
-- 暗中派人监视古龙
-- 一场更大的阴谋正在酝酿...
-
-目标字数：2800字
-情绪基调：憋屈中带着希望，暗流涌动'></textarea>
-                    </div>
-
-                    <div class="generate-actions">
-                        <button id="generateBtn" class="btn-primary">🚀 开始生成</button>
-                        <div id="generateStatus" class="status"></div>
-                    </div>
-
-                    <div class="generate-result">
-                        <h3>📚 生成结果</h3>
-                        <textarea id="novelResult" placeholder="生成的小说内容将显示在这里..." readonly></textarea>
-                        <div class="result-actions">
-                            <button id="copyResultBtn" class="btn-secondary">📋 复制</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 连续生成区域 -->
+            <!-- 批量生成区域 -->
             <div class="batch-generate">
-                <h2>🔄 连续生成</h2>
+                <h2>✨ 小说生成</h2>
                 <div class="batch-config">
                     <h3>⚙️ 批量配置</h3>
 
@@ -270,6 +166,25 @@
                             <label><input type="checkbox" id="batchUseWorldBible" checked> 使用世界设定</label>
                             <label><input type="checkbox" id="batchUpdateState"> 更新角色状态</label>
                         </div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>📖 章节内容设置:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="batchUsePreviousChapters" checked> 读取前面章节内容</label>
+                        </div>
+                        <div class="chapter-help">
+                            <small>
+                                💡 <strong>读取前面章节内容</strong>：生成时读取前面章节的最新文件内容，确保内容衔接一致<br>
+                                💡 与记忆功能的区别：记忆读取的是对话历史，章节内容读取的是实际保存的章节文件
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <label>📊 章节数量:</label>
+                        <input type="number" id="batchPreviousChaptersCount" value="1" min="1" max="10">
+                        <small>读取前面几章的内容（最多10章）</small>
                     </div>
 
                     <div class="config-group">

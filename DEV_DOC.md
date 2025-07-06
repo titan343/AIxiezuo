@@ -121,7 +121,9 @@ content = generator.generate_chapter(
     recent_count=20,                  # 加载最近20条消息
     use_compression=False,            # False=读取原始消息，True=读取压缩摘要
     use_state=True,
-    use_world_bible=True
+    use_world_bible=True,
+    use_previous_chapters=True,       # 启用前面章节内容读取
+    previous_chapters_count=2         # 读取前面2章的内容
 )
 ```
 
@@ -150,18 +152,7 @@ response = generator.chat(
 )
 ```
 
-### 3. 多版本生成
-```python
-# 生成多个版本
-versions = generator.generate_multiple_versions(
-    chapter_plan=chapter_plan,
-    num_versions=3,
-    model_name="anthropic_claude",
-    system_prompt="创作修仙小说"
-)
-```
-
-### 4. 状态更新
+### 3. 状态更新
 ```python
 # 读取状态更新模版
 update_rules = read_template("001_update_state_rules.txt")
@@ -175,7 +166,7 @@ new_state = generator.update_state(
 )
 ```
 
-### 5. 记忆管理功能
+### 4. 记忆管理功能
 
 #### 按范围加载记忆
 ```python
@@ -213,7 +204,7 @@ stats = generator.get_memory_stats("novel_project_1")
 # 返回: {"total_messages": 150, "total_chunks": 2, "compressed_chunks": 1, ...}
 ```
 
-### 6. 直接调用LLM
+### 5. 直接调用LLM
 ```python
 from main import LLMCaller
 
@@ -256,6 +247,10 @@ response = LLMCaller.call(
   - `False`: 从 `chunks/{session_id}_chunk_xxx.json` 读取原始消息
   - `True`: 从 `summaries/{session_id}_summary_xxx.json` 读取压缩摘要
 - `compression_model` (str) - 压缩时使用的模型，默认"deepseek_chat"
+- `use_previous_chapters` (bool) - **是否读取前面章节内容，默认False**
+  - 从xiaoshuo目录读取前面已保存的章节文件内容
+  - 确保生成内容与最新的章节文件保持一致，解决记忆与文件不同步问题
+- `previous_chapters_count` (int) - 读取前面章节的数量，默认1（范围1-10）
 
 ### update_state() 参数详解
 - `chapter_content` (str) - 章节内容，必需。用于分析状态变化的小说文本

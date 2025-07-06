@@ -57,9 +57,9 @@ class LLMConfigManager:
             },
             "dsf5": {
                 "provider": "openai",
-                "model": "[稳定]gemini-2.5-pro-preview-06-05-c",
+                "model": os.getenv("DSF5_API_MODEL"),
                 "api_key": os.getenv("DSF5_API_KEY"),
-                "base_url": "https://api.sikong.shop/v1",
+                "base_url": os.getenv("DSF5_API_URL"),
                 "temperature": 0.7
             },
             "openai_gpt4": {
@@ -753,7 +753,9 @@ class NovelGenerator:
         use_compression: bool = False,
         compression_model: str = "deepseek_chat",
         read_compressed: bool = False,
-        novel_id: Optional[str] = None
+        novel_id: Optional[str] = None,
+        use_previous_chapters: bool = False,
+        previous_chapters_count: int = 1
     ) -> str:
         messages = []
         
@@ -774,6 +776,18 @@ class NovelGenerator:
         
         # 构建用户输入 - 使用更自然的提示词表达
         user_content = f"请根据下面的章节细纲进行小说内容创作：\n\n{chapter_outline}"
+        
+        # 加载前面章节内容
+        if use_previous_chapters:
+            current_chapter_index = self._extract_chapter_index(chapter_outline)
+            if current_chapter_index is not None and current_chapter_index > 1:
+                # 确保count在合理范围内
+                count = max(1, min(previous_chapters_count, current_chapter_index - 1))
+                previous_content = self.load_previous_chapters(
+                    current_chapter_index, count, novel_id
+                )
+                if previous_content:
+                    user_content += f"\n\n前面章节内容参考：\n{previous_content}"
         
         if use_state:
             state = self.state_manager.load_latest_state(novel_id)
@@ -1008,6 +1022,50 @@ class NovelGenerator:
         """获取记忆统计信息"""
         return self.memory_manager.get_session_stats(session_id)
 
+    def load_previous_chapters(
+        self, 
+        current_chapter_index: int, 
+        count: int = 1, 
+        novel_id: Optional[str] = None
+    ) -> str:
+        """加载前面章节内容
+        
+        Args:
+            current_chapter_index: 当前章节索引
+            count: 要读取的前面章节数量
+            novel_id: 小说ID
+            
+        Returns:
+            前面章节的内容字符串，如果没有则返回空字符串
+        """
+        if current_chapter_index <= 1 or count <= 0:
+            return ""
+        
+        os.makedirs("./xiaoshuo", exist_ok=True)
+        previous_contents = []
+        
+        # 从当前章节往前读取指定数量的章节
+        start_index = max(1, current_chapter_index - count)
+        for chapter_idx in range(start_index, current_chapter_index):
+            try:
+                if novel_id:
+                    file_path = f"./xiaoshuo/{novel_id}_chapter_{chapter_idx:03d}.txt"
+                else:
+                    file_path = f"./xiaoshuo/chapter_{chapter_idx:03d}.txt"
+                
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read().strip()
+                        if content:
+                            previous_contents.append(f"【第{chapter_idx}章内容】\n{content}")
+            except Exception as e:
+                print(f"读取第{chapter_idx}章失败: {e}")
+                continue
+        
+        if previous_contents:
+            return "\n\n".join(previous_contents)
+        return ""
+
     def _extract_chapter_index(self, chapter_outline: str) -> Optional[int]:
         """从章节细纲中提取章节索引"""
         import re
@@ -1031,34 +1089,7 @@ class NovelGenerator:
         # 如果没有找到，返回None
         return None
 
-    def generate_multiple_versions(
-        self,
-        chapter_outline: str,
-        num_versions: int = 3,
-        model_name: str = "deepseek_chat",
-        system_prompt: str = "",
-        novel_id: Optional[str] = None
-    ) -> List[str]:
-        """生成多个版本的章节"""
-        versions = []
-        
-        for i in range(num_versions):
-            print(f"正在生成第 {i+1} 个版本...")
-            version = self.generate_chapter(
-                chapter_outline=chapter_outline,
-                model_name=model_name,
-                system_prompt=system_prompt,
-                use_memory=False,  # 多版本生成时不使用记忆
-                novel_id=novel_id
-            )
-            versions.append(version)
-        
-        # 保存所有版本
-        chapter_index = self._extract_chapter_index(chapter_outline)
-        if chapter_index is not None:
-            self._save_versions(versions, chapter_index, novel_id)
-        
-        return versions
+
 
     def _save_chapter(self, content: str, chapter_index: int, novel_id: Optional[str] = None):
         os.makedirs("./xiaoshuo", exist_ok=True)
