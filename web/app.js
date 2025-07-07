@@ -134,7 +134,7 @@ class TemplateManager {
 
     updateTemplateSelect() {
         const select = document.getElementById('templateSelect');
-        
+
         // 检查元素是否存在
         if (!select) {
             console.error('templateSelect元素不存在');
@@ -206,7 +206,7 @@ class TemplateManager {
             console.error('templateInfo元素不存在');
             return;
         }
-        
+
         infoDiv.innerHTML = `
             <h4>${template.name}</h4>
             <p><strong>ID:</strong> ${template.id}</p>
@@ -435,7 +435,7 @@ class BatchGenerator {
 
             const data = await response.json();
             const select = document.getElementById('batchTemplateSelect');
-            
+
             // 检查元素是否存在
             if (!select) {
                 throw new Error('batchTemplateSelect元素不存在');
@@ -518,6 +518,9 @@ class BatchGenerator {
         }
 
         try {
+            // 显示初始化状态
+            this.showLoadingState('正在初始化...', 'info');
+
             // 检测当前进度
             const response = await fetch(`${API_BASE}/novels/${novelId}/info`);
             if (!response.ok) throw new Error('获取小说信息失败');
@@ -532,16 +535,19 @@ class BatchGenerator {
             this.currentChapter = 0;
             this.totalChapters = chapterCount;
 
-            // 更新UI
+            // 更新UI - 显示加载状态
+            this.showLoadingState('正在生成中，请耐心等待约3分钟...', 'info');
             document.getElementById('startBatchBtn').disabled = true;
             document.getElementById('stopBatchBtn').disabled = false;
             this.updateProgress(0, chapterCount);
             this.addLog(`开始批量生成，从第 ${startChapter} 章开始，共生成 ${chapterCount} 章`, 'info');
+            this.addLog(`💡 提示：生成过程需要约3分钟，请耐心等待，系统正在努力工作中...`, 'info');
 
             // 执行批量生成
             for (let i = 0; i < chapterCount; i++) {
                 if (this.shouldStop) {
                     this.addLog('用户手动停止生成', 'warning');
+                    this.showLoadingState('生成已停止', 'warning');
                     break;
                 }
 
@@ -551,17 +557,25 @@ class BatchGenerator {
                 try {
                     await this.generateSingleChapter(novelId, templateId, chapterIndex);
                     this.updateProgress(this.currentChapter, this.totalChapters);
+                    this.showLoadingState(`已完成 ${this.currentChapter}/${this.totalChapters} 章，${chapterCount - this.currentChapter > 0 ? '继续生成中...' : '即将完成...'}`, 'info');
                 } catch (error) {
                     this.addLog(`第 ${chapterIndex} 章生成失败: ${error.message}`, 'error');
+                    this.showLoadingState(`第 ${chapterIndex} 章生成失败，生成已停止`, 'error');
                     break;
                 }
             }
 
             // 完成
             this.addLog('批量生成完成！', 'success');
+            this.showLoadingState('🎉 所有章节生成完成！', 'success');
+            // 3秒后自动隐藏状态
+            setTimeout(() => {
+                this.hideLoadingState();
+            }, 3000);
 
         } catch (error) {
             this.addLog(`批量生成启动失败: ${error.message}`, 'error');
+            this.hideLoadingState();
         } finally {
             this.isRunning = false;
             document.getElementById('startBatchBtn').disabled = false;
@@ -571,6 +585,7 @@ class BatchGenerator {
 
     async generateSingleChapter(novelId, templateId, chapterIndex) {
         this.addLog(`正在生成第 ${chapterIndex} 章...`, 'info');
+        this.showLoadingState(`正在生成第 ${chapterIndex} 章，请耐心等待...`, 'info');
 
         try {
             // 1. 读取章节细纲
@@ -615,9 +630,11 @@ class BatchGenerator {
             await this.autoSaveChapter(result.content, novelId, chapterIndex);
 
             this.addLog(`第 ${chapterIndex} 章生成成功 (${result.word_count} 字)，已自动保存`, 'success');
+            this.showLoadingState(`第 ${chapterIndex} 章生成完成，继续生成下一章...`, 'info');
 
         } catch (error) {
             this.addLog(`第 ${chapterIndex} 章生成失败: ${error.message}`, 'error');
+            this.showLoadingState(`第 ${chapterIndex} 章生成失败，请查看日志...`, 'error');
             throw error;
         }
     }
@@ -685,6 +702,7 @@ class BatchGenerator {
         if (this.isRunning) {
             this.shouldStop = true;
             this.addLog('正在停止批量生成...', 'warning');
+            this.hideLoadingState();
         }
     }
 
@@ -710,6 +728,18 @@ class BatchGenerator {
         const infoDiv = document.getElementById('batchNovelInfo');
         infoDiv.className = `novel-info ${type}`;
         infoDiv.textContent = message;
+    }
+
+    showLoadingState(message, type = 'info') {
+        const statusDiv = document.getElementById('batchStatus');
+        statusDiv.innerHTML = `<span class="loading"></span>${message}`;
+        statusDiv.className = `status ${type}`;
+    }
+
+    hideLoadingState() {
+        const statusDiv = document.getElementById('batchStatus');
+        statusDiv.innerHTML = '';
+        statusDiv.className = 'status';
     }
 }
 
