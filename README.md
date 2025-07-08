@@ -164,7 +164,7 @@ generator.generate_chapter(
     update_state=True            # 是否更新状态
 )
 
-# 对话交互
+# 交互调用（命令行使用）
 generator.chat(
     user_input="用户输入",
     session_id="会话ID",
@@ -185,7 +185,6 @@ new_state = generator.update_state(
 - `POST /generate` - 生成章节
 - `GET /novels` - 获取小说列表
 - `GET /novel/{novel_id}/info` - 获取小说信息
-- `POST /chat` - 对话接口
 
 ## 支持的模型
 

@@ -144,6 +144,7 @@ def generate_novel():
         template_id = data.get("template_id")
         chapter_outline = data.get("chapter_outline")  # 改为章节细纲
         model_name = data.get("model_name", "deepseek_chat")
+        update_model_name = data.get("update_model_name")
         use_memory = data.get("use_memory", False)
         read_compressed = data.get("read_compressed", False)
         use_compression = data.get("use_compression", False)
@@ -197,6 +198,7 @@ def generate_novel():
             use_state=use_state,
             use_world_bible=use_world_bible,
             update_state=update_state,
+            update_model_name=update_model_name,
             recent_count=recent_count,
             use_compression=use_compression,
             read_compressed=read_compressed,
@@ -217,40 +219,7 @@ def generate_novel():
         print(f"生成错误: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    """AI对话"""
-    try:
-        data = request.json
-        
-        if 'message' not in data:
-            return jsonify({"error": "缺少消息内容"}), 400
-        
-        message = data['message']
-        model_name = data.get('model_name', 'deepseek_chat')
-        use_memory = data.get('use_memory', True)
-        session_id = data.get('session_id', 'web_chat')  # 接收会话ID参数
-        
-        # 调用对话功能
-        response = generator.chat(
-            user_input=message,
-            model_name=model_name,
-            system_prompt="你是一个专业的小说创作助手，可以帮助用户解答关于小说创作的各种问题。",
-            session_id=session_id,  # 使用传入的会话ID
-            use_memory=use_memory,
-            recent_count=10,
-            save_conversation=use_memory
-        )
-        
-        return jsonify({
-            "response": response,
-            "model_used": model_name,
-            "session_id": session_id,  # 返回使用的会话ID
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/novels', methods=['GET'])
 def get_novels():

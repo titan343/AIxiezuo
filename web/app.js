@@ -326,79 +326,7 @@ ${templateData.contents.update_state_rules}
 
 
 
-// 对话管理器
-class ChatManager {
-    constructor() {
-        this.initEvents();
-    }
 
-    initEvents() {
-        // 发送消息
-        document.getElementById('sendChatBtn').addEventListener('click', () => {
-            this.sendMessage();
-        });
-
-        // 回车发送
-        document.getElementById('chatInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-    }
-
-    async sendMessage() {
-        const input = document.getElementById('chatInput');
-        const message = input.value.trim();
-
-        if (!message) return;
-
-        // 添加用户消息到界面
-        this.addMessage('user', message);
-        input.value = '';
-
-        try {
-            // 获取当前的小说ID作为会话标识
-            const novelId = document.getElementById('novelId').value.trim();
-            const sessionId = novelId || 'web_chat';  // 如果没有小说ID，使用默认的web_chat
-
-            const response = await fetch(`${API_BASE}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message,
-                    model_name: document.getElementById('chatModel').value,
-                    use_memory: document.getElementById('chatMemory').checked,
-                    session_id: sessionId  // 使用小说ID作为会话ID
-                })
-            });
-
-            if (!response.ok) throw new Error('发送消息失败');
-
-            const result = await response.json();
-            this.addMessage('assistant', result.response);
-
-        } catch (error) {
-            this.addMessage('system', `错误: ${error.message}`);
-        }
-    }
-
-    addMessage(role, content) {
-        const messagesContainer = document.getElementById('chatMessages');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${role}`;
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        contentDiv.textContent = content;
-
-        messageDiv.appendChild(contentDiv);
-        messagesContainer.appendChild(messageDiv);
-
-        // 滚动到底部
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-}
 
 // 批量生成管理器
 class BatchGenerator {
@@ -595,10 +523,14 @@ class BatchGenerator {
             }
 
             // 2. 收集生成参数
+            const updateModelSelect = document.getElementById('batchUpdateModelSelect');
+            const updateModelName = updateModelSelect.value || null;
+
             const generateData = {
                 template_id: templateId,
                 chapter_outline: outline,
                 model_name: document.getElementById('batchModelSelect').value,
+                update_model_name: updateModelName,
                 use_memory: document.getElementById('batchUseMemory').checked,
                 read_compressed: document.getElementById('batchReadCompressed').checked,
                 use_compression: document.getElementById('batchUseCompression').checked,
@@ -760,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化各个管理器
     new TabManager();
     new TemplateManager();
-    new ChatManager();
     new BatchGenerator();
     new SettingsManager();
 

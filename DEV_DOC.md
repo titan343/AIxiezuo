@@ -127,9 +127,9 @@ content = generator.generate_chapter(
 )
 ```
 
-### 2. 智能记忆对话
+### 2. 智能交互调用（命令行使用）
 ```python
-# 基本对话
+# 基本交互调用（用于命令行脚本）
 response = generator.chat(
     user_input="请继续写下一段",
     model_name="deepseek_chat",
@@ -139,10 +139,10 @@ response = generator.chat(
     recent_count=20,              # 加载最近20条消息
     use_compression=False,        # 是否压缩历史记录
     compression_model="deepseek_chat",  # 压缩使用的模型
-    save_conversation=True        # 是否保存对话
+    save_conversation=True        # 是否保存交互记录
 )
 
-# 带压缩的长期对话
+# 带压缩的长期交互
 response = generator.chat(
     user_input="回顾一下前面的剧情发展",
     session_id="long_project",
@@ -272,7 +272,7 @@ response = LLMCaller.call(
   - `False`: 从原始消息文件读取
   - `True`: 从压缩摘要文件读取
 - `compression_model` (str) - 压缩时使用的模型，默认"deepseek_chat"
-- `save_conversation` (bool) - 是否保存对话到记忆，默认True
+- `save_conversation` (bool) - 是否保存交互记录到记忆，默认True
 
 ### LLMCaller.call() 参数
 - `messages` (List[Dict]) - 消息列表，必需

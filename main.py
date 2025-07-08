@@ -749,6 +749,7 @@ class NovelGenerator:
         use_state: bool = True,
         use_world_bible: bool = True,
         update_state: bool = False,
+        update_model_name: Optional[str] = None,
         recent_count: int = 20,
         use_compression: bool = False,
         compression_model: str = "deepseek_chat",
@@ -860,10 +861,11 @@ class NovelGenerator:
                             update_system_prompt = f.read().strip()
                     
                     # 调用状态更新
+                    update_model = update_model_name or model_name
                     new_state = self.update_state(
                         chapter_content=response,
                         current_state=current_state,
-                        model_name=model_name,
+                        model_name=update_model,
                         novel_id=novel_id,
                         system_prompt=update_system_prompt
                     )

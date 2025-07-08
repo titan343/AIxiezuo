@@ -15,7 +15,6 @@
             <nav class="tabs">
                 <button class="tab-btn active" data-tab="template">📝 模版管理</button>
                 <button class="tab-btn" data-tab="generate">✨ 小说生成</button>
-                <button class="tab-btn" data-tab="chat">💬 助手对话</button>
             </nav>
         </header>
 
@@ -157,6 +156,19 @@
                     </div>
 
                     <div class="config-group">
+                        <label>🔄 更新设定模型:</label>
+                        <select id="batchUpdateModelSelect">
+                            <option value="">同生成模型</option>
+                            <option value="deepseek_chat">DeepSeek Chat</option>
+                            <option value="deepseek_reasoner">DeepSeek Reasoner</option>
+                            <option value="dsf5">DSF5 (Gemini)</option>
+                            <option value="openai_gpt4">OpenAI GPT-4</option>
+                            <option value="openai_gpt35">OpenAI GPT-3.5</option>
+                        </select>
+                        <small>状态更新时使用的模型（留空则使用生成模型）</small>
+                    </div>
+
+                    <div class="config-group">
                         <label>📚 记忆设置:</label>
                         <div class="checkbox-group">
                             <label><input type="checkbox" id="batchUseMemory" checked> 启用历史记录</label>
@@ -217,33 +229,7 @@
         </div>
     </div>
 
-    <!-- 助手对话 -->
-    <div id="chat" class="tab-content">
-        <div class="chat-section">
-            <div class="chat-messages" id="chatMessages">
-                <div class="message system">
-                    <div class="message-content">
-                        💡 欢迎使用AI助手！你可以询问关于小说创作的任何问题。
-                        <br>💾 提示：如果在"小说生成"页面设置了小说ID，对话记忆将与该小说关联。
-                    </div>
-                </div>
-            </div>
 
-            <div class="chat-input">
-                <div class="chat-config">
-                    <select id="chatModel">
-                        <option value="deepseek_chat">DeepSeek Chat</option>
-                        <option value="openai_gpt35">OpenAI GPT-3.5</option>
-                    </select>
-                    <label><input type="checkbox" id="chatMemory" checked> 记住对话</label>
-                </div>
-                <div class="input-group">
-                    <textarea id="chatInput" placeholder="输入你的问题..." rows="3"></textarea>
-                    <button id="sendChatBtn" class="btn-primary">发送</button>
-                </div>
-            </div>
-        </div>
-    </div>
     </div>
 
     <script src="app.js"></script>
