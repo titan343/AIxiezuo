@@ -8,6 +8,7 @@
 import os
 import json
 import time
+import sys
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from main import NovelGenerator, LLMCaller
@@ -16,8 +17,11 @@ app = Flask(__name__)
 CORS(app)
 
 # 全局配置
+if getattr(sys, 'frozen', False):
+    WEB_DIR = os.path.join(os.path.dirname(sys.executable), 'web')
+else:
+    WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web')
 TEMPLATES_DIR = "./templates"
-WEB_DIR = "./web"
 XIAOSHUO_DIR = "./xiaoshuo"
 
 # 确保目录存在
@@ -145,13 +149,9 @@ def generate_novel():
         chapter_outline = data.get("chapter_outline")  # 改为章节细纲
         model_name = data.get("model_name", "deepseek_chat")
         update_model_name = data.get("update_model_name")
-        use_memory = data.get("use_memory", False)
-        read_compressed = data.get("read_compressed", False)
-        use_compression = data.get("use_compression", False)
         use_state = data.get("use_state", True)
         use_world_bible = data.get("use_world_bible", True)
         update_state = data.get("update_state", False)
-        recent_count = data.get("recent_count", 20)
         session_id = data.get("session_id", "default")
         novel_id = data.get("novel_id")
         use_previous_chapters = data.get("use_previous_chapters", False)
@@ -193,15 +193,11 @@ def generate_novel():
             chapter_outline=chapter_outline,  # 使用章节细纲
             model_name=model_name,
             system_prompt=system_prompt,
-            use_memory=use_memory,
             session_id=session_id,
             use_state=use_state,
             use_world_bible=use_world_bible,
             update_state=update_state,
             update_model_name=update_model_name,
-            recent_count=recent_count,
-            use_compression=use_compression,
-            read_compressed=read_compressed,
             novel_id=novel_id,
             use_previous_chapters=use_previous_chapters,
             previous_chapters_count=previous_chapters_count
@@ -475,8 +471,60 @@ def save_chapter():
         })
         
     except Exception as e:
-        logger.error(f"保存章节失败: {e}")
+        print(f"保存章节失败: {e}")
         return jsonify({"error": f"保存章节失败: {str(e)}"}), 500
+
+@app.route("/api/update-state", methods=["POST"])
+def update_state():
+    """手动更新角色设定"""
+    try:
+        data = request.get_json()
+        novel_id = data.get('novel_id')
+        chapter_index = data.get('chapter_index')
+        model_name = data.get('model_name')
+        force_update = data.get('force_update', False)
+        
+        if not novel_id:
+            return jsonify({"error": "缺少小说ID"}), 400
+        
+        if not chapter_index:
+            return jsonify({"error": "缺少章节编号"}), 400
+        
+        # 读取章节内容
+        chapter_filename = f"{novel_id}_chapter_{chapter_index:03d}.txt"
+        chapter_path = os.path.join("./xiaoshuo", chapter_filename)
+        
+        if not os.path.exists(chapter_path):
+            return jsonify({"error": f"章节文件不存在: {chapter_filename}"}), 404
+        
+        with open(chapter_path, 'r', encoding='utf-8') as f:
+            chapter_content = f.read()
+        
+        # 加载当前状态
+        current_state = generator.state_manager.load_latest_state(novel_id)
+        if not current_state:
+            return jsonify({"error": "找不到当前角色状态"}), 404
+        
+        # 使用生成器直接更新状态
+        updated_state = generator.update_state(
+            chapter_content=chapter_content,
+            current_state=current_state,
+            model_name=model_name or generator.model_name,
+            novel_id=novel_id
+        )
+        
+        return jsonify({
+            "success": True,
+            "novel_id": novel_id,
+            "chapter_index": chapter_index,
+            "summary": f"基于第{chapter_index}章内容更新了角色设定",
+            "updated_fields": ["protagonist", "characters", "current_plot_summary"],
+            "model_used": model_name or generator.model_name
+        })
+        
+    except Exception as e:
+        print(f"手动更新状态失败: {e}")
+        return jsonify({"error": f"状态更新失败: {str(e)}"}), 500
 
 # ===== 设定管理API =====
 @app.route("/api/settings/<novel_id>", methods=["GET"])
@@ -526,7 +574,7 @@ def get_settings_list(novel_id):
         })
         
     except Exception as e:
-        logger.error(f"获取设定列表失败: {e}")
+        print(f"获取设定列表失败: {e}")
         return jsonify({"error": f"获取设定列表失败: {str(e)}"}), 500
 
 @app.route("/api/settings/<novel_id>/character/<version>", methods=["GET"])
@@ -553,7 +601,7 @@ def get_character_settings(novel_id, version):
         })
         
     except Exception as e:
-        logger.error(f"获取人物设定失败: {e}")
+        print(f"获取人物设定失败: {e}")
         return jsonify({"error": f"获取人物设定失败: {str(e)}"}), 500
 
 @app.route("/api/settings/<novel_id>/world/<version>", methods=["GET"])
@@ -580,7 +628,7 @@ def get_world_settings(novel_id, version):
         })
         
     except Exception as e:
-        logger.error(f"获取世界设定失败: {e}")
+        print(f"获取世界设定失败: {e}")
         return jsonify({"error": f"获取世界设定失败: {str(e)}"}), 500
 
 @app.route("/api/settings/<novel_id>/character/<version>", methods=["PUT"])
@@ -614,7 +662,7 @@ def save_character_settings(novel_id, version):
         })
         
     except Exception as e:
-        logger.error(f"保存人物设定失败: {e}")
+        print(f"保存人物设定失败: {e}")
         return jsonify({"error": f"保存人物设定失败: {str(e)}"}), 500
 
 @app.route("/api/settings/<novel_id>/world/<version>", methods=["PUT"])
@@ -648,7 +696,7 @@ def save_world_settings(novel_id, version):
         })
         
     except Exception as e:
-        logger.error(f"保存世界设定失败: {e}")
+        print(f"保存世界设定失败: {e}")
         return jsonify({"error": f"保存世界设定失败: {str(e)}"}), 500
 
 @app.route("/api/settings/<novel_id>/character/new", methods=["POST"])
@@ -698,7 +746,7 @@ def create_new_character_version(novel_id):
         })
         
     except Exception as e:
-        logger.error(f"创建新人物设定版本失败: {e}")
+        print(f"创建新人物设定版本失败: {e}")
         return jsonify({"error": f"创建新版本失败: {str(e)}"}), 500
 
 @app.route("/api/settings/<novel_id>/world/new", methods=["POST"])
@@ -748,7 +796,7 @@ def create_new_world_version(novel_id):
         })
         
     except Exception as e:
-        logger.error(f"创建新世界设定版本失败: {e}")
+        print(f"创建新世界设定版本失败: {e}")
         return jsonify({"error": f"创建新版本失败: {str(e)}"}), 500
 
 # ===== 错误处理 =====

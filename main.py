@@ -744,16 +744,11 @@ class NovelGenerator:
         chapter_outline: str,
         model_name: str = "deepseek_chat",
         system_prompt: str = "",
-        use_memory: bool = False,
         session_id: str = "default",
         use_state: bool = True,
         use_world_bible: bool = True,
         update_state: bool = False,
         update_model_name: Optional[str] = None,
-        recent_count: int = 20,
-        use_compression: bool = False,
-        compression_model: str = "deepseek_chat",
-        read_compressed: bool = False,
         novel_id: Optional[str] = None,
         use_previous_chapters: bool = False,
         previous_chapters_count: int = 1
@@ -763,17 +758,6 @@ class NovelGenerator:
         # 添加系统提示
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-        
-        # 加载历史记录
-        if use_memory and recent_count > 0:
-            history_messages = self.memory_manager.load_recent_messages(
-                session_id=session_id,
-                count=recent_count,
-                use_compression=use_compression,
-                compression_model=compression_model,
-                read_compressed=read_compressed
-            )
-            messages.extend(history_messages)
         
         # 构建用户输入 - 使用更自然的提示词表达
         user_content = f"请根据下面的章节细纲进行小说内容创作：\n\n{chapter_outline}"
@@ -803,44 +787,8 @@ class NovelGenerator:
         user_message = {"role": "user", "content": user_content}
         messages.append(user_message)
         
-        # 保存用户消息到记忆
-        if use_memory:
-            self.memory_manager.save_message(session_id, user_message)
-        
         # 调用LLM
         response = LLMCaller.call(messages, model_name)
-        
-        # 保存AI回复到记忆
-        if use_memory:
-            ai_message = {"role": "assistant", "content": response}
-            self.memory_manager.save_message(session_id, ai_message)
-            
-            # 如果启用压缩，自动压缩最新的分片
-            if use_compression:
-                try:
-                    # 获取当前会话的统计信息
-                    stats = self.memory_manager.get_session_stats(session_id)
-                    total_chunks = stats.get("total_chunks", 0)
-                    
-                    # 压缩最新的分片（如果存在且未压缩）
-                    if total_chunks > 0:
-                        index_data = self.memory_manager.index_manager.load_session_index(session_id)
-                        compressed_chunks = len(index_data.get("summaries", {}))
-                        
-                        # 如果有未压缩的分片，压缩最新的一个
-                        if total_chunks > compressed_chunks:
-                            latest_chunk = total_chunks
-                            success = self.memory_manager.compress_chunk(
-                                session_id=session_id,
-                                chunk_index=latest_chunk,
-                                model_name=compression_model
-                            )
-                            if success:
-                                print(f"自动压缩分片 {latest_chunk} 成功")
-                            else:
-                                print(f"自动压缩分片 {latest_chunk} 失败")
-                except Exception as e:
-                    print(f"自动压缩失败: {e}")
         
         # 保存章节内容 - 尝试从细纲中提取章节索引
         chapter_index = self._extract_chapter_index(chapter_outline)
@@ -1151,18 +1099,12 @@ if __name__ == "__main__":
     
     # 4. 显示使用示例
     print("\n4. 使用示例:")
-    print("   # 生成章节 (带记忆)")
-    print("   generator.generate_chapter(chapter_plan, use_memory=True, recent_count=20)")
-    print("   # 对话聊天 (带压缩)")
-    print("   generator.chat('继续写作', use_compression=True, recent_count=15)")
-    print("   # 按范围加载记忆")
-    print("   generator.load_memory_by_range('session1', 1, 50, use_compression=True)")
-    print("   # 压缩记忆分片")
-    print("   generator.compress_memory_chunk('session1', 1)")
-    print("   # 批量压缩")
-    print("   generator.batch_compress_memory('session1', [1,2,3])")
-    print("   # 获取统计信息")
-    print("   generator.get_memory_stats('session1')")
+    print("   # 生成章节")
+    print("   generator.generate_chapter(chapter_plan, use_state=True, use_world_bible=True)")
+    print("   # 命令行交互")
+    print("   generator.chat('继续写作')")
+    print("   # 读取前面章节内容")
+    print("   generator.load_previous_chapters(3, 2, 'novel_001')")
     print("   # 直接调用LLM")
     print("   LLMCaller.call(messages, model_name='dsf5')")
     

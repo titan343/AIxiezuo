@@ -4,14 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小说生成系统</title>
+    <title>聪明小鱼鱼小说生成系统</title>
     <link rel="stylesheet" href="style.css">
+        <style>
+        /* 新增的赞赏区域样式 */
+        .donate-section {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border-top: 3px solid #6c757d;
+            text-align: center;
+        }
+
+        .donate-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .donate-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .donate-text {
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            color: #6c757d;
+        }
+
+        .qr-codes {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .qr-item {
+            text-align: center;
+        }
+
+        .qr-item img {
+            width: 300px;
+            height: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 5px;
+            background: white;
+        }
+
+        .qr-label {
+            margin-top: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .donate-note {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #868e96;
+            font-style: italic;
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
         <header>
-            <h1>🎭 小说生成系统</h1>
+            <h1>🎭聪明小鱼鱼小说生成系统</h1>
             <nav class="tabs">
                 <button class="tab-btn active" data-tab="template">📝 模版管理</button>
                 <button class="tab-btn" data-tab="generate">✨ 小说生成</button>
@@ -169,44 +229,37 @@
                     </div>
 
                     <div class="config-group">
-                        <label>📚 记忆设置:</label>
+                        <label>⚙️ 生成设置:</label>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" id="batchUseMemory" checked> 启用历史记录</label>
-                            <label><input type="checkbox" id="batchReadCompressed"> 读取压缩记忆</label>
-                            <label><input type="checkbox" id="batchUseCompression" checked> 生成后压缩</label>
                             <label><input type="checkbox" id="batchUseState" checked> 使用角色状态</label>
                             <label><input type="checkbox" id="batchUseWorldBible" checked> 使用世界设定</label>
-                            <label><input type="checkbox" id="batchUpdateState"> 更新角色状态</label>
+                            <label><input type="checkbox" id="batchUpdateState"> 更新角色设定</label>
                         </div>
                     </div>
 
                     <div class="config-group">
-                        <label>📖 章节内容设置:</label>
+                        <label>📖 是否读取前面章节:</label>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" id="batchUsePreviousChapters" checked> 读取前面章节内容</label>
+                            <label><input type="checkbox" id="batchUsePreviousChapters" checked> 读取前面章节内容。</label>
                         </div>
                         <div class="chapter-help">
                             <small>
-                                💡 <strong>读取前面章节内容</strong>：生成时读取前面章节的最新文件内容，确保内容衔接一致<br>
-                                💡 与记忆功能的区别：记忆读取的是对话历史，章节内容读取的是实际保存的章节文件
+                                💡 <strong>读取前面章节内容</strong>：生成时读取前面章节的最新文件内容，确保内容衔接一致
                             </small>
                         </div>
                     </div>
 
                     <div class="config-group">
-                        <label>📊 章节数量:</label>
+                        <label>📊 读取前面章节数量:</label>
                         <input type="number" id="batchPreviousChaptersCount" value="1" min="1" max="10">
-                        <small>读取前面几章的内容（最多10章）</small>
+                        <small>让AI记忆更连贯，（建议不超过2章，有些第三方API支持上下文较小）。</small>
                     </div>
 
-                    <div class="config-group">
-                        <label>🔢 记忆数量:</label>
-                        <input type="number" id="batchRecentCount" value="20" min="1" max="100">
-                    </div>
+
 
                     <div class="config-group">
-                        <label>📊 执行章节数:</label>
-                        <input type="number" id="batchChapterCount" value="5" min="1" max="50" placeholder="要生成的章节数量">
+                        <label>📊 生成章节数:</label>
+                        <input type="number" id="batchChapterCount" value="1" min="1" max="50" placeholder="要生成的章节数量">
                         <small>系统将从当前进度开始，连续生成指定数量的章节</small>
                     </div>
                 </div>
@@ -218,17 +271,44 @@
                     </div>
                     <div id="progressText" class="progress-text">等待开始...</div>
                     <div id="batchLog" class="batch-log"></div>
-                </div>
+    </div>
 
                 <div class="batch-actions">
                     <button id="startBatchBtn" class="btn-primary">🚀 开始连续生成</button>
                     <button id="stopBatchBtn" class="btn-danger" disabled>⏹️ 停止生成</button>
+                    <button id="manualUpdateStateBtn" class="btn-secondary">🔄 手动更新角色设定</button>
                     <div id="batchStatus" class="status"></div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- ====================== 新增的赞赏区域 ====================== -->
+    <!-- 位置：在小说生成区域之后，整个容器结束之前 -->
+    <div class="donate-section">
+        <h3>💖 支持开发者</h3>
+        <div class="donate-content">
+            <p class="donate-text">
+                如果这个项目对您有帮助，欢迎请作者喝杯咖啡 ☕<br>
+                您的支持是我持续更新的动力！
+            </p>
 
+            <div class="qr-codes">
+                <div class="qr-item">
+                    <img src="微信赞赏.png" alt="微信赞赏">
+                    <div class="qr-label">微信赞赏</div>
+                </div>
+                <div class="qr-item">
+                    <img src="支付宝赞赏.png" alt="支付宝赞赏">
+                    <div class="qr-label">支付宝赞赏</div>
+                </div>
+            </div>
+
+            <p class="donate-note">
+                温馨提示：赞赏完全自愿，感谢支持！(#^.^#)
+            </p>
+        </div>
+    </div>
+    <!-- ====================== 赞赏区域结束 ====================== -->
 
     </div>
 

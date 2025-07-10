@@ -1,18 +1,16 @@
 # AI小说生成系统   作者：聪明小鱼鱼/claude/gemini
 
-基于LangChain的AI小说生成工具，支持多种大语言模型，具备状态管理、记忆系统和Web界面。
+基于LangChain的AI小说生成工具，支持多种大语言模型，具备状态管理和Web界面。
 
 ## 功能特性
 
 - 🤖 支持多种大语言模型（DeepSeek、OpenAI、Claude、Gemini等）
 - 📚 章节状态管理和世界设定保存
-- 🧠 智能记忆系统，支持对话历史压缩
+
 - 🌐 Web界面，便于交互式创作
 - 📝 多小说项目隔离管理
 - 🔄 多版本生成和比较
-![微信截图_20250621235112](https://github.com/user-attachments/assets/0754700c-2937-4f60-9937-6910032001d2)
-![微信截图_20250621235138](https://github.com/user-attachments/assets/583094fd-4b8e-4eb8-8b56-fed366f6d849)
-![微信截图_20250621235322](https://github.com/user-attachments/assets/db920f8a-6e4c-4de7-b3b6-091e3fabc85f)
+
 
 ## 安装使用
 
@@ -71,7 +69,7 @@ langchain/
 │   ├── app.js
 │   └── style.css
 ├── data/                  # 数据存储
-├── memory/                # 记忆存储
+
 ├── xiaoshuo/             # 生成内容
 ├── prompts/              # 提示词模板
 └── templates/            # 写作要求模板
@@ -130,24 +128,7 @@ langchain/
 
 纯文本格式，存储生成的章节内容。
 
-### 记忆系统文件
 
-**索引文件：** `memory/{novel_id}_index.json`
-```json
-{
-  "session_id": "novel_id",
-  "total_messages": 50,
-  "chunks": {
-    "1": {"start": 1, "end": 100, "count": 100}
-  },
-  "summaries": {
-    "1": {"file": "summary_001.json", "created_at": 1234567890}
-  }
-}
-```
-
-**分片文件：** `memory/chunks/{novel_id}_chunk_{编号}.json`
-**摘要文件：** `memory/summaries/{novel_id}_summary_{编号}.json`
 
 ## API接口
 
@@ -159,7 +140,6 @@ generator.generate_chapter(
     chapter_outline="章节大纲",
     model_name="deepseek_chat",  # 模型选择
     novel_id="项目ID",           # 小说项目ID
-    use_memory=True,             # 是否使用记忆
     use_state=True,              # 是否使用状态
     update_state=True            # 是否更新状态
 )

@@ -9,7 +9,7 @@
 - ⚙️ **接口参数化** - 所有功能通过参数控制
 - 🧩 **高度模块化** - 组件间完全解耦
 - 💾 **智能状态管理** - 自动状态追踪和更新
-- 🧠 **增强记忆管理** - 分片存储、索引、压缩的记忆系统
+
 - 🚫 **零硬编码** - 文档中所有代码示例的字符串都是参数示例，非硬编码
 
 ## 架构设计
@@ -31,9 +31,8 @@ response = LLMCaller.call(
 ```
 
 ### 3. 业务组件
-- **NovelGenerator** - 小说生成 (集成智能记忆管理)
+- **NovelGenerator** - 小说生成 (集成智能状态管理)
 - **StateManager** - 状态管理
-- **MemoryManager** - 智能记忆管理 (分片存储+索引+压缩)
 
 ## 支持的大模型
 
@@ -112,14 +111,11 @@ chapter_plan = {
     "mood": "紧张刺激"
 }
 
-# 生成章节 (带记忆管理)
+# 生成章节
 content = generator.generate_chapter(
     chapter_plan=chapter_plan,
     model_name="deepseek_chat",
     system_prompt=system_prompt,      # 传入拼接好的模版提示词
-    use_memory=True,                  # 启用历史记录
-    recent_count=20,                  # 加载最近20条消息
-    use_compression=False,            # False=读取原始消息，True=读取压缩摘要
     use_state=True,
     use_world_bible=True,
     use_previous_chapters=True,       # 启用前面章节内容读取
@@ -166,45 +162,7 @@ new_state = generator.update_state(
 )
 ```
 
-### 4. 记忆管理功能
-
-#### 按范围加载记忆
-```python
-# 加载指定范围的消息
-messages = generator.load_memory_by_range(
-    session_id="novel_project_1",
-    start_msg=1,                  # 起始消息编号
-    end_msg=50,                   # 结束消息编号
-    use_compression=True,         # 是否压缩
-    compression_model="deepseek_chat"
-)
-```
-
-#### 压缩记忆分片
-```python
-# 压缩单个分片
-success = generator.compress_memory_chunk(
-    session_id="novel_project_1",
-    chunk_index=1,                # 分片索引
-    model_name="deepseek_chat",   # 压缩模型
-    compression_prompt="自定义压缩提示词"  # 可选
-)
-
-# 批量压缩分片
-results = generator.batch_compress_memory(
-    session_id="novel_project_1",
-    chunk_indices=[1, 2, 3],      # 要压缩的分片列表
-    model_name="deepseek_chat"
-)
-```
-
-#### 获取记忆统计
-```python
-stats = generator.get_memory_stats("novel_project_1")
-# 返回: {"total_messages": 150, "total_chunks": 2, "compressed_chunks": 1, ...}
-```
-
-### 5. 直接调用LLM
+### 4. 直接调用LLM
 ```python
 from main import LLMCaller
 
@@ -217,12 +175,7 @@ response = LLMCaller.call(
     model_name="google_gemini"
 )
 
-# 带记忆调用
-response = LLMCaller.call(
-    messages=[{"role": "user", "content": "继续故事"}],
-    model_name="openai_gpt4",
-    memory=memory_object
-)
+
 ```
 
 ## 参数说明
@@ -261,51 +214,30 @@ response = LLMCaller.call(
   - 示例：`system_prompt = read_template("001_update_state_rules.txt")`
   - 如果不传入，使用内置的状态更新规则
 
-### chat() 参数详解
+### chat() 参数详解（命令行使用）
 - `user_input` (str) - 用户输入，必需
 - `model_name` (str) - 模型名称，默认"deepseek_chat"
 - `system_prompt` (str) - 系统提示词，默认空
 - `session_id` (str) - 会话ID，默认"default"
-- `use_memory` (bool) - 是否加载历史记录，默认True
-- `recent_count` (int) - 加载最近N条消息，默认20
-- `use_compression` (bool) - **历史记录压缩控制，默认False**
-  - `False`: 从原始消息文件读取
-  - `True`: 从压缩摘要文件读取
-- `compression_model` (str) - 压缩时使用的模型，默认"deepseek_chat"
-- `save_conversation` (bool) - 是否保存交互记录到记忆，默认True
 
 ### LLMCaller.call() 参数
 - `messages` (List[Dict]) - 消息列表，必需
 - `model_name` (str) - 模型名称，默认"deepseek_chat"
-- `memory` (Optional) - 记忆对象，默认None
 - `temperature` (Optional[float]) - 温度参数，默认None
 
-### 记忆管理专用参数
-- `load_memory_by_range()` - 按范围加载：`start_msg`, `end_msg`, `use_compression`, `compression_model`
-- `compress_memory_chunk()` - 压缩分片：`chunk_index`, `model_name`, `compression_prompt`
-- `batch_compress_memory()` - 批量压缩：`chunk_indices`, `model_name`
-- `get_memory_stats()` - 获取统计：仅需`session_id`
+
 
 ## 文件结构
 ```
 langchain/
-├── main.py                # 主程序（集成智能记忆管理）
-├── main_backup.py         # 原版本备份
-├── enhanced_memory_example.py  # 记忆管理功能示例
+├── main.py                # 主程序（集成智能状态管理）
 ├── data/                  # 数据存储
 │   ├── chapter_XXX_state.json  # 章节状态
 │   └── world_bible_XX.json     # 世界设定
-├── memory/               # 智能记忆管理
-│   ├── chunks/           # 分片存储
-│   │   ├── session_chunk_001.json
-│   │   └── session_chunk_002.json
-│   ├── summaries/        # 压缩摘要
-│   │   └── session_summary_001.json
-│   └── session_index.json  # 会话索引
 ├── xiaoshuo/             # 生成的小说
 ├── versions/             # 版本管理
-├── modules/              # 旧模块（可选择保留）
-└── prompts/              # 提示词文件（可选）
+├── modules/              # 模块文件
+└── prompts/              # 提示词文件
 ```
 
 ## 扩展开发
@@ -344,94 +276,20 @@ class CustomGenerator(NovelGenerator):
 3. **参数化控制** - 每个功能都可通过参数精确控制
 4. **高度复用** - 全局LLM调用器可被所有业务组件使用
 5. **易于扩展** - 添加新模型或功能只需修改配置
-6. **智能记忆管理** - 分片存储+压缩，支持大规模对话历史
-7. **统一接口** - 单一记忆管理接口，功能强大而简洁
+6. **智能状态管理** - 支持角色状态和世界设定管理
 8. **简洁明了** - 核心代码保持清晰，功能模块化
 
-## 历史记录读取机制详解
 
-### 压缩控制参数的具体行为
-当使用 `generate_chapter()` 或 `chat()` 方法时：
-
-**use_compression=False (默认)**：
-- 读取路径：`memory/chunks/{session_id}_chunk_xxx.json`
-- 内容：原始完整的对话消息
-- 适用场景：短期对话，需要完整上下文
-
-**use_compression=True**：
-- 读取路径：`memory/summaries/{session_id}_summary_xxx.json`
-- 内容：LLM压缩后的摘要文本
-- 适用场景：长期项目，节省token消耗
-
-### 文件路径对应关系
-```
-memory/
-├── chunks/                           # 原始消息存储
-│   ├── novel_project_1_chunk_001.json    # 第1-100条消息
-│   └── novel_project_1_chunk_002.json    # 第101-200条消息
-├── summaries/                        # 压缩摘要存储  
-│   └── novel_project_1_summary_001.json  # 第1片的压缩摘要
-└── novel_project_1_index.json       # 索引文件
-```
-
-### 调用示例对比
-```python
-# 读取原始消息 (完整上下文)
-response = generator.chat(
-    user_input="继续写作",
-    use_compression=False,  # 从chunks/目录读取
-    recent_count=20
-)
-
-# 读取压缩摘要 (节省token)
-response = generator.chat(
-    user_input="继续写作", 
-    use_compression=True,   # 从summaries/目录读取
-    recent_count=20
-)
-```
-
-## 智能记忆管理系统
-
-### 核心组件
-- **MemoryChunkManager** - 分片存储管理器，处理消息分片和索引
-- **MemoryCompressor** - 独立压缩模块，使用LLM压缩历史记录
-- **MemoryIndexManager** - 索引管理器，维护分片信息和元数据
-- **MemoryManager** - 智能记忆管理器，整合上述功能
-
-### 工作原理
-1. **分片存储** - 按设定大小将消息分片存储（默认100条/片）
-2. **索引管理** - 维护分片索引，支持快速定位和范围查询
-3. **智能压缩** - 可选择性压缩历史分片，节省存储空间
-4. **灵活加载** - 支持按范围、最近N条等多种加载方式
-
-### 文件结构
-```
-memory/
-├── chunks/                    # 分片存储目录
-│   ├── {session_id}_chunk_001.json
-│   └── {session_id}_chunk_002.json
-├── summaries/                 # 压缩摘要目录
-│   └── {session_id}_summary_001.json
-└── {session_id}_index.json   # 会话索引文件
-```
-
-### 使用场景
-- **短期对话** - 默认模式，自动管理记忆
-- **长期项目** - 启用压缩，支持数千条消息
-- **批量处理** - 支持批量压缩和范围查询
-- **灵活配置** - 可调节分片大小和压缩策略
 
 ## 迁移指南
 
 从旧版本迁移：
-1. 备份现有数据文件（data/, memory/等）
+1. 备份现有数据文件（data/等）
 2. 使用新的 `NovelGenerator` 替代 `NovelGenerationTask`
 3. 将硬编码的提示词改为参数传入
 4. 使用 `LLMCaller.call()` 替代直接的LLM调用
-5. 所有记忆功能已自动升级为智能管理
 
-新架构保持了数据格式兼容性，现有的状态文件和记忆文件可直接使用。
+新架构保持了数据格式兼容性，现有的状态文件可直接使用。
 
 ## ⚠️ 重要警告
 
@@ -450,7 +308,7 @@ memory/
 
 3. **dsf5**
    - API Key: `DSF5_API_KEY`
-   - Base URL: `https://api.sikong.shop/v1`
+   - Base URL: `https://第三方api地址/v1`
    - Model: `[稳定]gemini-2.5-pro-preview-06-05-c`
 
 这些配置已在代码中标记保护，任何修改都会导致用户设置丢失。

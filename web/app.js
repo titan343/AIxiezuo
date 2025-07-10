@@ -354,6 +354,11 @@ class BatchGenerator {
         document.getElementById('stopBatchBtn').addEventListener('click', () => {
             this.stopBatchGeneration();
         });
+
+        // 手动更新角色设定
+        document.getElementById('manualUpdateStateBtn').addEventListener('click', () => {
+            this.manualUpdateState();
+        });
     }
 
     async loadTemplatesForBatch() {
@@ -423,7 +428,20 @@ class BatchGenerator {
     }
 
     async startBatchGeneration() {
-        if (this.isRunning) return;
+        // 强化防重复执行检查
+        if (this.isRunning) {
+            this.addLog('生成已在进行中，请耐心等待...', 'warning');
+            return;
+        }
+
+        // 立即禁用按钮防止重复点击
+        const startBtn = document.getElementById('startBatchBtn');
+        const stopBtn = document.getElementById('stopBatchBtn');
+
+        if (startBtn.disabled) {
+            this.addLog('请等待当前操作完成...', 'warning');
+            return;
+        }
 
         // 验证输入
         const novelId = document.getElementById('batchNovelId').value.trim();
@@ -457,16 +475,17 @@ class BatchGenerator {
             const currentMaxChapter = this.extractMaxChapter(info);
             const startChapter = currentMaxChapter + 1;
 
-            // 初始化批量生成
+            // 初始化批量生成状态
             this.isRunning = true;
             this.shouldStop = false;
             this.currentChapter = 0;
             this.totalChapters = chapterCount;
 
-            // 更新UI - 显示加载状态
+            // 更新UI - 立即禁用开始按钮，启用停止按钮
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
             this.showLoadingState('正在生成中，请耐心等待约3分钟...', 'info');
-            document.getElementById('startBatchBtn').disabled = true;
-            document.getElementById('stopBatchBtn').disabled = false;
             this.updateProgress(0, chapterCount);
             this.addLog(`开始批量生成，从第 ${startChapter} 章开始，共生成 ${chapterCount} 章`, 'info');
             this.addLog(`💡 提示：生成过程需要约3分钟，请耐心等待，系统正在努力工作中...`, 'info');
@@ -505,9 +524,10 @@ class BatchGenerator {
             this.addLog(`批量生成启动失败: ${error.message}`, 'error');
             this.hideLoadingState();
         } finally {
+            // 恢复按钮状态
             this.isRunning = false;
-            document.getElementById('startBatchBtn').disabled = false;
-            document.getElementById('stopBatchBtn').disabled = true;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
         }
     }
 
@@ -515,60 +535,49 @@ class BatchGenerator {
         this.addLog(`正在生成第 ${chapterIndex} 章...`, 'info');
         this.showLoadingState(`正在生成第 ${chapterIndex} 章，请耐心等待...`, 'info');
 
-        try {
-            // 1. 读取章节细纲
-            const outline = await this.loadChapterOutline(novelId, chapterIndex);
-            if (!outline) {
-                throw new Error(`找不到第 ${chapterIndex} 章的细纲文件`);
-            }
-
-            // 2. 收集生成参数
-            const updateModelSelect = document.getElementById('batchUpdateModelSelect');
-            const updateModelName = updateModelSelect.value || null;
-
-            const generateData = {
-                template_id: templateId,
-                chapter_outline: outline,
-                model_name: document.getElementById('batchModelSelect').value,
-                update_model_name: updateModelName,
-                use_memory: document.getElementById('batchUseMemory').checked,
-                read_compressed: document.getElementById('batchReadCompressed').checked,
-                use_compression: document.getElementById('batchUseCompression').checked,
-                use_state: document.getElementById('batchUseState').checked,
-                use_world_bible: document.getElementById('batchUseWorldBible').checked,
-                update_state: document.getElementById('batchUpdateState').checked,
-                recent_count: parseInt(document.getElementById('batchRecentCount').value) || 20,
-                session_id: novelId,
-                novel_id: novelId,
-                use_previous_chapters: document.getElementById('batchUsePreviousChapters').checked,
-                previous_chapters_count: parseInt(document.getElementById('batchPreviousChaptersCount').value) || 1
-            };
-
-            // 3. 调用生成API
-            const response = await fetch(`${API_BASE}/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(generateData)
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || '生成失败');
-            }
-
-            const result = await response.json();
-
-            // 4. 自动保存到正确的文件路径
-            await this.autoSaveChapter(result.content, novelId, chapterIndex);
-
-            this.addLog(`第 ${chapterIndex} 章生成成功 (${result.word_count} 字)，已自动保存`, 'success');
-            this.showLoadingState(`第 ${chapterIndex} 章生成完成，继续生成下一章...`, 'info');
-
-        } catch (error) {
-            this.addLog(`第 ${chapterIndex} 章生成失败: ${error.message}`, 'error');
-            this.showLoadingState(`第 ${chapterIndex} 章生成失败，请查看日志...`, 'error');
-            throw error;
+        // 1. 读取章节细纲
+        const outline = await this.loadChapterOutline(novelId, chapterIndex);
+        if (!outline) {
+            throw new Error(`找不到第 ${chapterIndex} 章的细纲文件`);
         }
+
+        // 2. 收集生成参数
+        const updateModelSelect = document.getElementById('batchUpdateModelSelect');
+        const updateModelName = updateModelSelect.value || null;
+
+        const generateData = {
+            template_id: templateId,
+            chapter_outline: outline,
+            model_name: document.getElementById('batchModelSelect').value,
+            update_model_name: updateModelName,
+            use_state: document.getElementById('batchUseState').checked,
+            use_world_bible: document.getElementById('batchUseWorldBible').checked,
+            update_state: document.getElementById('batchUpdateState').checked,
+            session_id: novelId,
+            novel_id: novelId,
+            use_previous_chapters: document.getElementById('batchUsePreviousChapters').checked,
+            previous_chapters_count: parseInt(document.getElementById('batchPreviousChaptersCount').value) || 1
+        };
+
+        // 3. 调用生成API
+        const response = await fetch(`${API_BASE}/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(generateData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '生成失败');
+        }
+
+        const result = await response.json();
+
+        // 4. 自动保存到正确的文件路径
+        await this.autoSaveChapter(result.content, novelId, chapterIndex);
+
+        this.addLog(`第 ${chapterIndex} 章生成成功 (${result.word_count} 字)，已自动保存`, 'success');
+        this.showLoadingState(`第 ${chapterIndex} 章生成完成，继续生成下一章...`, 'info');
     }
 
     async autoSaveChapter(content, novelId, chapterIndex) {
@@ -672,6 +681,69 @@ class BatchGenerator {
         const statusDiv = document.getElementById('batchStatus');
         statusDiv.innerHTML = '';
         statusDiv.className = 'status';
+    }
+
+    async manualUpdateState() {
+        const novelId = document.getElementById('batchNovelId').value.trim();
+        if (!novelId) {
+            alert('请输入小说ID');
+            return;
+        }
+
+        // 检查是否有最新章节内容可用于更新
+        try {
+            this.showLoadingState('正在手动更新角色设定...', 'info');
+            this.addLog('开始手动更新角色设定...', 'info');
+
+            // 获取小说信息，找到最新章节
+            const infoResponse = await fetch(`${API_BASE}/novels/${novelId}/info`);
+            if (!infoResponse.ok) throw new Error('获取小说信息失败');
+
+            const info = await infoResponse.json();
+            const latestChapter = this.extractMaxChapter(info);
+
+            if (latestChapter === 0) {
+                throw new Error('没有找到可用的章节内容进行状态更新');
+            }
+
+            // 读取最新章节内容
+            const chapterPath = `xiaoshuo/${novelId}_chapter_${latestChapter.toString().padStart(3, '0')}.txt`;
+
+            // 构建更新请求数据
+            const updateModelSelect = document.getElementById('batchUpdateModelSelect');
+            const updateModelName = updateModelSelect.value || document.getElementById('batchModelSelect').value;
+
+            const updateData = {
+                novel_id: novelId,
+                chapter_index: latestChapter,
+                model_name: updateModelName,
+                force_update: true  // 标识这是手动更新
+            };
+
+            // 调用状态更新API
+            const response = await fetch(`${API_BASE}/update-state`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '状态更新失败');
+            }
+
+            const result = await response.json();
+            this.addLog(`✅ 角色设定更新成功！基于第${latestChapter}章内容`, 'success');
+            this.addLog(`📊 更新内容：${result.summary || '状态已同步'}`, 'info');
+            this.hideLoadingState();
+
+        } catch (error) {
+            this.addLog(`❌ 手动更新失败: ${error.message}`, 'error');
+            this.showLoadingState(`更新失败: ${error.message}`, 'error');
+            setTimeout(() => {
+                this.hideLoadingState();
+            }, 3000);
+        }
     }
 }
 
