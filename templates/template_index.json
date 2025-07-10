@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "description": "小说生成系统提示词模板索引",
+  "last_updated": "2025-06-18",
+  "templates": {
+    "001": {
+      "id": "001",
+      "name": "经典爽文小说模板",
+      "category": "爽文",
+      "description": "",
+      "author": "用户创建",
+      "created_date": "2025-06-18",
+      "files": {
+        "writer_role": "001_writer_role.txt",
+        "writing_rules": "001_writing_rules.txt",
+        "update_state_rules": "001_update_state_rules.txt"
+      },
+      "word_count_range": {
+        "min": 2200,
+        "max": 3500
+      }
+    },
+    "002": {
+      "id": "002",
+      "name": "情绪内核小说模板",
+      "category": "爽文",
+      "description": "",
+      "author": "用户创建",
+      "created_date": "2025-07-04",
+      "files": {
+        "writer_role": "002_writer_role.txt",
+        "writing_rules": "002_writing_rules.txt",
+        "update_state_rules": "002_update_state_rules.txt"
+      },
+      "word_count_range": {
+        "min": 2200,
+        "max": 3500
+      }
+    }
+  },
+  "naming_convention": {
+    "pattern": "{ID}_{type}.txt",
+    "types": [
+      "writer_role",
+      "writing_rules",
+      "update_state_rules"
+    ],
+    "description": "ID为3位数字，type为功能类型"
+  },
+  "usage_guide": {
+    "step1": "根据ID从索引中获取模板信息",
+    "step2": "读取对应的三个提示词文件",
+    "step3": "组合提示词内容传递给AI",
+    "example_id": "001"
+  }
+}
