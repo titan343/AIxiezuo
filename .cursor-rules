@@ -1,5 +1,0 @@
-ENVIRONMENT: PyCharm with .venv virtual environment
-PROJECT_PATH: D:\pythonproject\langchain
-TESTING: User tests in their own environment, AI should not run commands
-SYSTEM: Windows OS - Use Windows commands (copy, move, del) instead of Linux commands (cp, mv, rm). Do not use && for command chaining, use separate commands instead.
-VIRTUAL_ENVIRONMENT: This project uses .venv virtual environment. Always activate the virtual environment before installing dependencies or running commands. Never install packages globally or execute Python commands outside of the virtual environment.
