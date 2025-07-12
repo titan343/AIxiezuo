@@ -38,7 +38,7 @@ DSF_API_URL="第三方api链接"
 
 ### 3. 启动方式
 
-**Web界面（推荐）：**
+**Web界面：**
 ```bash
 python start_web.py
 ```
